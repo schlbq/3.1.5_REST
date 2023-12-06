@@ -1,47 +1,42 @@
 package ru.kata.spring.boot_security.demo.entity;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.Size;
+import java.util.Collection;
 import java.util.Set;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotEmpty(message = "Name should not be empty")
-    @Size(min = 2, max = 30, message = "Name should be between 2 to 30")
     private String name;
     private String lastName;
-    @Positive(message = "Age should not be empty")
     private Byte age;
-    @NotEmpty(message = "Email should not be empty")
-    @Email(message = "Email should be valid")
     private String email;
-    @NotEmpty(message = "Password should not be empty")
     private String password;
     @Column(unique = true)
-    @NotEmpty(message = "Login should not be empty")
     private String login;
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
 
     public User() {
     }
 
-    public User(String name, String lastName, Byte age, String email, String password, String login, Set<Role> roles) {
+    public User(String name, String lastName, Byte age, String email, String password, String login) {
         this.name = name;
         this.lastName = lastName;
         this.age = age;
         this.email = email;
         this.password = password;
         this.login = login;
-        this.roles = roles;
     }
 
     public User(String password, String login, Set<Role> roles) {
@@ -91,6 +86,11 @@ public class User {
     }
 
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return getRoles();
+    }
+
     public String getPassword() {
         return password;
     }
@@ -99,11 +99,12 @@ public class User {
         this.password = password;
     }
 
-    public String getLogin() {
+    @Override
+    public String getUsername() {
         return login;
     }
 
-    public void setLogin(String login) {
+    public void setUsername(String login) {
         this.login = login;
     }
 
@@ -115,7 +116,25 @@ public class User {
         this.roles = roles;
     }
 
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 
     @Override
     public String toString() {

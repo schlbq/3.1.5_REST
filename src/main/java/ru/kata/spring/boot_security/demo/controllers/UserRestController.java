@@ -3,7 +3,6 @@ package ru.kata.spring.boot_security.demo.controllers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -11,8 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import ru.kata.spring.boot_security.demo.entity.Role;
 import ru.kata.spring.boot_security.demo.entity.User;
-import ru.kata.spring.boot_security.demo.service.UserDetailsServiceImpl;
 import ru.kata.spring.boot_security.demo.service.RoleServiceImpl;
+import ru.kata.spring.boot_security.demo.service.UserServiceImpl;
 
 import java.security.Principal;
 import java.util.List;
@@ -22,52 +21,44 @@ import java.util.List;
 public class UserRestController {
 
     private final RoleServiceImpl roleService;
-    private final UserDetailsServiceImpl userDetailsService;
+    private final UserServiceImpl userService;
 
     @Autowired
-    public UserRestController(RoleServiceImpl roleService, UserDetailsServiceImpl userDetailsService) {
+    public UserRestController(RoleServiceImpl roleService, UserServiceImpl userService) {
         this.roleService = roleService;
-        this.userDetailsService = userDetailsService;
+        this.userService = userService;
     }
     @GetMapping("/user")
     public ModelAndView index(Model model,Principal principal) {
         System.out.println("\n\n\n\n\n" + "Hello");
         ModelAndView mav= new ModelAndView("user");
-        User user = userDetailsService.findByName(principal.getName());
-        System.out.println("\n\n\n\n\n" + user.getLogin());
+        User user = userService.findByName(principal.getName());
+        System.out.println("\n\n\n\n\n" + user.getUsername());
         model.addAttribute("user",user);
         return mav;
     }
 
-    /* @GetMapping()
-     public ResponseEntity<User> getAuthenticatedUser(Principal principal) {
-         User user = userDetailsService.findByName(principal.getName());
-         return user != null
-                 ? new ResponseEntity<>(user, HttpStatus.OK)
-                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
-     }*/
     @GetMapping("/admin")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ModelAndView startPage(ModelMap model, Principal principal) {
         ModelAndView admin = new ModelAndView("admin");
-        User user = userDetailsService.findByName(principal.getName());
+        User user = userService.findByName(principal.getName());
         model.addAttribute("user", user);
-        model.addAttribute("allUsers", userDetailsService.findAll());
+        model.addAttribute("allUsers", userService.findAll());
         model.addAttribute("roleUser", roleService.getAllRoles());
         return admin;
     }
 
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userDetailsService.findAll();
+        List<User> users = userService.findAll();
         return users != null && !users.isEmpty()
-                ? new ResponseEntity<>(userDetailsService.findAll(), HttpStatus.OK)
+                ? new ResponseEntity<>(userService.findAll(), HttpStatus.OK)
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @GetMapping("/users/{id}")
     public ResponseEntity<User> getUserById(@PathVariable("id") Long id) {
-        User user = userDetailsService.findOne(id);
+        User user = userService.findOne(id);
         return user != null
                 ? new ResponseEntity<>(user, HttpStatus.OK)
                 : new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -80,25 +71,22 @@ public class UserRestController {
     }
 
     @PostMapping("/users")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<HttpStatus> saveNewUser(@RequestBody User user) {
         user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
-        userDetailsService.saveUser(user);
+        userService.saveUser(user);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @PutMapping("/users")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<HttpStatus> updateUser(@RequestBody User user) {
         user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
-        userDetailsService.update(user);
+        userService.update(user);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @DeleteMapping("/users/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<HttpStatus> deleteUser(@PathVariable("id") Long id) {
-        userDetailsService.deleteUser(id);
+        userService.deleteUser(id);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 

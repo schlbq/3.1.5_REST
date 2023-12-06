@@ -15,7 +15,7 @@
         <div class="container-fluid">
             <div>
                 <div class="text-white me-auto d-inline-block">
-                    <strong class="text-white" style="font-size: 1.5em" th:utext="${user.getLogin()}">
+                    <strong class="text-white" style="font-size: 1.5em" th:utext="${user.getUsername()}">
                         Username@mail.ru
                     </strong>
                 </div>
@@ -27,6 +27,9 @@
                           th:each="role : ${user.getRoles()}" th:utext="${role.getName()}">
                         USER
                     </span>
+<!--                    <div th:each="role : ${user.getRoles()}">                 -->
+<!--                        <span th:utext="${role.getName()}">USER</span>               -->
+<!--                    </div>                                               -->
                 </div>
             </div>
             <a class="navbar-brand text-white-50 fs-20" href="/logout">Logout</a>

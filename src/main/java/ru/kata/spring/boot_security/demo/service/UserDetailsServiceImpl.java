@@ -1,36 +1,33 @@
 package ru.kata.spring.boot_security.demo.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.kata.spring.boot_security.demo.entity.MyUserPrincipal;
+import ru.kata.spring.boot_security.demo.entity.Role;
 import ru.kata.spring.boot_security.demo.entity.User;
 import ru.kata.spring.boot_security.demo.repository.UserRepository;
-import ru.kata.spring.boot_security.demo.util.PersonNotFoundException;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import java.util.List;
-import java.util.Optional;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 
 @Service
 @Transactional(readOnly = true)
 public class UserDetailsServiceImpl implements UserDetailsService {
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    @PersistenceContext
-    private EntityManager em;
+    private UserRepository userRepository;
 
     @Autowired
-    public UserDetailsServiceImpl(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder) {
+    public void setUserRepository(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+    }
+
+    public UserDetailsServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -38,37 +35,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         User user = userRepository.findUserByLogin(login)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        return new MyUserPrincipal(user);
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), mapRolesToAuthorities(user.getRoles()));
+
     }
 
-    public User findByName(String username) {
-        Optional<User> user = userRepository.findUserByLogin(username);
-        return user.orElse(null);
-    }
-
-    public List<User> findAll() {
-        return userRepository.findAll();
-    }
-
-    public User findOne(Long id) {
-        Optional<User> user = userRepository.findById(id);
-        return user.orElseThrow(PersonNotFoundException::new);
-    }
-
-    @Transactional
-    public void saveUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-    }
-
-    @Transactional
-    public void update(User updateUser) {
-        userRepository.save(updateUser);
-    }
-
-    @Transactional
-    public void deleteUser(long id) {
-        userRepository.deleteById(id);
-
+    private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<Role> roles) {
+        return roles.stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
     }
 }

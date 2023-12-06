@@ -14,7 +14,7 @@
         <div class="container-fluid">
             <div>
                 <div class="text-white me-auto d-inline-block">
-                    <strong class="text-white" style="font-size: 1.5em" th:utext="${user.getLogin()}">
+                    <strong class="text-white" style="font-size: 1.5em" th:utext="${user.getUsername()}">
                         Username
                     </strong>
                 </div>
@@ -79,7 +79,7 @@
                             <td th:text="${user.getAge()}"></td>
                             <td th:text="${user.getEmail()}"></td>
                             <td th:text="${user.getPassword()}"></td>
-                            <td th:text="${user.getLogin()}"></td>
+                            <td th:text="${user.getUsername()}"></td>
                             <td th:text="${user.getRoles()}"></td>
                         </tr>
 
